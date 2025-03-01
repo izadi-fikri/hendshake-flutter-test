@@ -20,10 +20,38 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+// History screen
+class HistoryScreen extends StatelessWidget {
+  final List<Map<String, dynamic>> activityHistory;
+
+  HistoryScreen({required this.activityHistory});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Activity History')),
+      body: ListView.builder(
+        itemCount: activityHistory.length,
+        itemBuilder: (context, index) {
+          final activity = activityHistory[index];
+          return ListTile(
+            title: Text(activity['activity']),
+            subtitle: Text('Price: ${activity['price']}'),
+          );
+        },
+      ),
+    );
+  }
+}
+
 // Initialize variable and create UI
 class _MyHomePageState extends State<MyHomePage> {
   String _activity = '';
   double _price = 0.0;
+
+  String? _selectedType;
+
+  List<Map<String, dynamic>> _activityHistory = []; // Add history list
 
   Future<void> _fetchActivity() async {
     final response = await http.get(
@@ -32,8 +60,19 @@ class _MyHomePageState extends State<MyHomePage> {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
+        //Fetch activity and set state
         _activity = data['activity'];
         _price = data['price'].toDouble();
+
+        // Add activity to history list
+        _activityHistory.insert(0, {
+          'activity': _activity,
+          'price': _price,
+          'type': data['type'],
+        });
+        if (_activityHistory.length > 50) {
+          _activityHistory.removeLast();
+        }
       });
     }
   }
@@ -46,10 +85,54 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            //Fetch activity button
             ElevatedButton(onPressed: _fetchActivity, child: Text('XXXX')),
             SizedBox(height: 20),
             Text('Activity: $_activity'),
             Text('Price: $_price'),
+
+            // History button
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) =>
+                            HistoryScreen(activityHistory: _activityHistory),
+                  ),
+                );
+              },
+              child: Text('History'),
+            ),
+
+            // Activity type dropdown
+            DropdownButton<String>(
+              value: _selectedType,
+              hint: Text('Select Activity Type'),
+              items:
+                  <String>[
+                    'education',
+                    'recreational',
+                    'social',
+                    'diy',
+                    'charity',
+                    'cooking',
+                    'relaxation',
+                    'music',
+                    'busy',
+                  ].map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedType = newValue;
+                });
+              },
+            ),
           ],
         ),
       ),
