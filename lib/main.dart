@@ -23,6 +23,7 @@ class MyHomePage extends StatefulWidget {
 // History screen
 class HistoryScreen extends StatelessWidget {
   final List<Map<String, dynamic>> activityHistory;
+  String? selectedType;
 
   HistoryScreen({required this.activityHistory});
 
@@ -34,6 +35,8 @@ class HistoryScreen extends StatelessWidget {
         itemCount: activityHistory.length,
         itemBuilder: (context, index) {
           final activity = activityHistory[index];
+          final isHighlighted =
+              selectedType != null && selectedType == activity['type'];
           return ListTile(
             title: Text(activity['activity']),
             subtitle: Text('Price: ${activity['price']}'),
@@ -54,6 +57,12 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Map<String, dynamic>> _activityHistory = []; // Add history list
 
   Future<void> _fetchActivity() async {
+    //Filter activity by type
+    String url = 'https://bored.api.lewagon.com/api/activity';
+    if (_selectedType != null && _selectedType!.isNotEmpty) {
+      url += '?type=$_selectedType';
+    }
+
     final response = await http.get(
       Uri.parse('https://bored.api.lewagon.com/api/activity'),
     );
